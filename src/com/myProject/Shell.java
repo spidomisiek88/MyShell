@@ -1,6 +1,8 @@
 package com.myProject;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.Scanner;
 
 public class Shell
@@ -8,44 +10,87 @@ public class Shell
 	private static final String DEFAULT_PROMPT = "$";
 	private static final String COMMAND_PROMPT = "prompt";
 	private static final String COMMAND_DIR = "dir";
+	private static final String COMMAND_TREE = "tree";
 	private static final String COMMAND_EXIT = "exit";
 	private static final String COMMAND_PROMPT_PARAM_RESET = "reset";
 	private static final String COMMAND_PROMPT_PARAM_$CWD = "$cwd";
-	
+
 	private String prompt = DEFAULT_PROMPT;
 	private Scanner in = new Scanner(System.in);
-	
+	private File currentDirectory = new File(".");
+	private File[] filesList = currentDirectory.listFiles();
+
 	public void printMainPrompt()
 	{
 		System.out.print("[" + MyShell.class.getSimpleName() + "] ");
 	}
-	
+
 	public void printPrompt()
 	{
 		System.out.print(prompt + ">");
 	}
-	
+
 	public String printDirInfo()
 	{
-		String contentCurrentDirectory = "\nContent of " + this.getClass().getClassLoader().getResource("").getPath();
-		File currentDirectory = new File(".");
-		File[] filesList = currentDirectory.listFiles();
+		StringBuilder contentCurrentDirectory = new StringBuilder();
+		
+		try
+		{
+			contentCurrentDirectory.append("Content of " + currentDirectory.getCanonicalPath());
+		}
+		catch (IOException ioException)
+		{
+			ioException.printStackTrace();
+		}
+		
 		for (File file : filesList)
 		{
 			if (file.isDirectory())
-				contentCurrentDirectory = contentCurrentDirectory + "\nDIR     " + file.getName();
+				contentCurrentDirectory.append("\nDIR     " + file.getName());
 			else if (file.isFile())
-				contentCurrentDirectory = contentCurrentDirectory + "\nFILE    " + file.getName();
+				contentCurrentDirectory.append("\nFILE    " + file.getName());
 		}
+
+		return contentCurrentDirectory.toString();
+	}
+
+	public String printDirTree(String treeStruct)
+	{
+		int indent = 0;
+		StringBuilder stringBuilder = new StringBuilder();
 		
-		return contentCurrentDirectory;
+		createDirTree(currentDirectory, indent, stringBuilder);
+
+		return stringBuilder.toString();
 	}
 	
-	public String printDirTree()
+	private void createDirTree(File directory, int indent, StringBuilder stringBuilder)
 	{
-		String treeStructureCurrentDirectory = "";
+		if (currentDirectory.isDirectory())
+		{
+			stringBuilder.append(getIndentString(indent));
+			if (directory.getName().equals("."))
+				stringBuilder.append(Paths.get("").toAbsolutePath().getFileName().toString());
+			else
+				stringBuilder.append(directory.getName());
+			stringBuilder.append("\n");
+			for (File dir : directory.listFiles())
+			{
+				if (dir.isDirectory())
+					createDirTree(dir, indent + 1, stringBuilder);
+			}
+		}
+	}
+	
+	private String getIndentString(int indent)
+	{
+		StringBuilder indentStringBuilder = new StringBuilder();
+		for (int i = 0; i < indent; i++)
+		{
+			indentStringBuilder.append("-");
+		}
 		
-		return treeStructureCurrentDirectory;
+		return indentStringBuilder.toString();
 	}
 
 	public String getPrompt()
@@ -57,7 +102,7 @@ public class Shell
 	{
 		this.prompt = prompt;
 	}
-	
+
 	public boolean listenShell()
 	{
 		boolean isListen = false;
@@ -72,23 +117,36 @@ public class Shell
 					setPrompt(DEFAULT_PROMPT);
 					isListen = true;
 				}
-				else if (param.equals(COMMAND_PROMPT_PARAM_$CWD)) 
+				else if (param.equals(COMMAND_PROMPT_PARAM_$CWD))
 				{
 					printMainPrompt();
-					System.out.println(this.getClass().getClassLoader().getResource("").getPath());
+					try
+					{
+						System.out.println(currentDirectory.getCanonicalPath());
+					}
+					catch (IOException ioException)
+					{
+						ioException.printStackTrace();
+					}
+					isListen = true;
 				}
-				else 
+				else
 				{
 					setPrompt(in.next());
 					isListen = true;
 				}
 			}
-			else if (command.equals(COMMAND_DIR)) 
+			else if (command.equals(COMMAND_DIR))
 			{
 				System.out.println(printDirInfo());
 				isListen = true;
 			}
-			else if (command.equals(COMMAND_EXIT)) 
+			else if (command.equals(COMMAND_TREE))
+			{
+				System.out.println(printDirTree(""));
+				isListen = true;
+			}
+			else if (command.equals(COMMAND_EXIT))
 				isListen = false;
 			else
 				isListen = true;
