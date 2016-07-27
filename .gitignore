@@ -1,0 +1,5 @@
+.classpath
+.project
+.settings/org.eclipse.jdt.core.prefs
+bin/com/myProject/MyShell.class
+bin/com/myProject/Shell.class
