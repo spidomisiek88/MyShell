@@ -180,6 +180,7 @@ public class Shell
 						currentDirectory = new File(".");
 					else
 						currentDirectory = new File(printCurrentWorkingDirectory(currentDirectory.getParentFile().getParentFile().getParentFile()), printCurrentWorkingDirectory(currentDirectory.getParentFile().getParentFile())+ "\\.");
+//						currentDirectory = new File(currentDirectory.getParentFile().getParentFile(), printCurrentWorkingDirectory(currentDirectory.getParentFile().getParentFile())+ "\\.");
 					setPrompt(printCurrentWorkingDirectory(currentDirectory));
 					isListen = true;
 				}
