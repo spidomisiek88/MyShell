@@ -11,6 +11,8 @@ public class Shell
 	private static final String COMMAND_PROMPT = "prompt";
 	private static final String COMMAND_DIR = "dir";
 	private static final String COMMAND_TREE = "tree";
+	private static final String COMMAND_CD = "cd";
+	private static final String COMMAND_CD_PARAM_DOTDOT = "..";
 	private static final String COMMAND_EXIT = "exit";
 	private static final String COMMAND_PROMPT_PARAM_RESET = "reset";
 	private static final String COMMAND_PROMPT_PARAM_$CWD = "$cwd";
@@ -22,26 +24,28 @@ public class Shell
 
 	public void printMainPrompt()
 	{
-		System.out.print("[" + MyShell.class.getSimpleName() + "] ");
+		System.out.print(getMainPrompt());
+	}
+	private String getMainPrompt()
+	{
+		return "[" + MyShell.class.getSimpleName() + "] ";
 	}
 
 	public void printPrompt()
 	{
-		System.out.print(prompt + ">");
+		System.out.print(getTagPrompt());
+	}
+	
+	private String getTagPrompt()
+	{
+		return prompt + ">";
 	}
 
 	public String printDirInfo()
 	{
 		StringBuilder contentCurrentDirectory = new StringBuilder();
 		
-		try
-		{
-			contentCurrentDirectory.append("Content of " + currentDirectory.getCanonicalPath());
-		}
-		catch (IOException ioException)
-		{
-			ioException.printStackTrace();
-		}
+		contentCurrentDirectory.append("Content of " + printCurrentWorkingDirectory(currentDirectory));
 		
 		for (File file : filesList)
 		{
@@ -102,6 +106,35 @@ public class Shell
 	{
 		this.prompt = prompt;
 	}
+	
+	private String printCurrentWorkingDirectory(File directory)
+	{
+		String cwdPath = "";
+		try
+		{
+			cwdPath = directory.getCanonicalPath();
+		}
+		catch (IOException ioException)
+		{
+			ioException.printStackTrace();
+		}
+		
+		return cwdPath;
+	}
+	
+	private boolean isInDirectory(File searchedDirectory, String wantedDirectory)
+	{
+		boolean isFind = false;
+		
+		for (File directory : searchedDirectory.listFiles())
+		{
+			if (directory.isDirectory())
+				if (directory.getName().equals(wantedDirectory))
+					isFind = true;
+		}
+		
+		return isFind;
+	}
 
 	public boolean listenShell()
 	{
@@ -119,15 +152,7 @@ public class Shell
 				}
 				else if (param.equals(COMMAND_PROMPT_PARAM_$CWD))
 				{
-					printMainPrompt();
-					try
-					{
-						System.out.println(currentDirectory.getCanonicalPath());
-					}
-					catch (IOException ioException)
-					{
-						ioException.printStackTrace();
-					}
+					setPrompt(printCurrentWorkingDirectory(currentDirectory));
 					isListen = true;
 				}
 				else
@@ -146,10 +171,38 @@ public class Shell
 				System.out.println(printDirTree(""));
 				isListen = true;
 			}
+			else if (command.equals(COMMAND_CD))
+			{
+				String param = in.next();
+				if (param.equals(COMMAND_CD_PARAM_DOTDOT))
+				{
+					if (null == currentDirectory.getParentFile())
+						currentDirectory = new File(".");
+					else
+						currentDirectory = new File(printCurrentWorkingDirectory(currentDirectory.getParentFile().getParentFile().getParentFile()), printCurrentWorkingDirectory(currentDirectory.getParentFile().getParentFile())+ "\\.");
+//						currentDirectory = new File(currentDirectory.getParentFile().getParentFile(), printCurrentWorkingDirectory(currentDirectory.getParentFile().getParentFile())+ "\\.");
+					setPrompt(printCurrentWorkingDirectory(currentDirectory));
+					isListen = true;
+				}
+				else if (!param.isEmpty())
+				{
+					if (isInDirectory(currentDirectory, param))
+					{
+						currentDirectory = new File(currentDirectory, param + "\\.");
+						setPrompt(printCurrentWorkingDirectory(currentDirectory));
+					}
+					else
+						System.out.println(printDirTree(""));
+					isListen = true;
+				}
+			}
 			else if (command.equals(COMMAND_EXIT))
 				isListen = false;
 			else
+			{
+				System.out.println(command + " : unknown command");
 				isListen = true;
+			}
 		}
 		return isListen;
 	}

@@ -1,5 +1,7 @@
 package com.myProject;
 
+import java.nio.file.Paths;
+
 public class MyShell
 {
 
@@ -16,6 +18,6 @@ public class MyShell
 		}
 		
 		System.out.println("Bye\n");
-		System.out.println(shell.getClass().getClassLoader().getResource("").getPath());
+		System.out.println(Paths.get("").toAbsolutePath().toString() + ">");
 	}
 }
